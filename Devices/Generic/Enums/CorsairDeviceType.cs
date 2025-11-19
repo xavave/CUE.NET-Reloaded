@@ -10,12 +10,13 @@ namespace CUE.NET.Devices.Generic.Enums
     /// </summary>
     public enum CorsairDeviceType
     {
-
-        Unknown = 0,
-        Mouse = 1,
-        Keyboard = 2,
-        Headset = 3,
-        Mousemat = 4,
-        HeadsetStand = 5
+        Unknown = 0x0000,
+        Mouse = 0x0001,
+        Keyboard = 0x0002,
+        Headset = 0x0008,
+        Mousemat = 0x0004,
+        HeadsetStand = 0x0010,
+        // API 4.x filter value to get all device types
+        All = unchecked((int)0xFFFFFFFF)
     };
 }

@@ -163,7 +163,9 @@ namespace CUE.NET
 
                     _CorsairDeviceInfo_V4[] deviceInfos = new _CorsairDeviceInfo_V4[64];
                     int deviceCount;
-                    error = _CUESDK.CorsairGetDevices(IntPtr.Zero, deviceInfos.Length, deviceInfos, out deviceCount);
+                    // API 4.x requires a valid filter, not NULL
+                    _CorsairDeviceFilter filter = new _CorsairDeviceFilter { deviceTypeMask = (int)CorsairDeviceType.All };
+                    error = _CUESDK.CorsairGetDevices(ref filter, deviceInfos.Length, deviceInfos, out deviceCount);
 
                     if (error != CorsairError.Success)
                         return false;
@@ -222,7 +224,9 @@ namespace CUE.NET
             IList<ICueDevice> devices = new List<ICueDevice>();
             _CorsairDeviceInfo_V4[] deviceInfos = new _CorsairDeviceInfo_V4[64]; // CORSAIR_DEVICE_COUNT_MAX
             int deviceCount;
-            error = _CUESDK.CorsairGetDevices(IntPtr.Zero, deviceInfos.Length, deviceInfos, out deviceCount);
+            // API 4.x requires a valid filter, not NULL
+            _CorsairDeviceFilter filter = new _CorsairDeviceFilter { deviceTypeMask = (int)CorsairDeviceType.All };
+            error = _CUESDK.CorsairGetDevices(ref filter, deviceInfos.Length, deviceInfos, out deviceCount);
 
             if (error != CorsairError.Success)
                 Throw(error, true);
@@ -391,7 +395,9 @@ namespace CUE.NET
             // Get device list to verify previously loaded devices
             _CorsairDeviceInfo_V4[] deviceInfos = new _CorsairDeviceInfo_V4[64];
             int deviceCount;
-            error = _CUESDK.CorsairGetDevices(IntPtr.Zero, deviceInfos.Length, deviceInfos, out deviceCount);
+            // API 4.x requires a valid filter, not NULL
+            _CorsairDeviceFilter filter = new _CorsairDeviceFilter { deviceTypeMask = (int)CorsairDeviceType.All };
+            error = _CUESDK.CorsairGetDevices(ref filter, deviceInfos.Length, deviceInfos, out deviceCount);
 
             if (error != CorsairError.Success)
                 Throw(error, false);

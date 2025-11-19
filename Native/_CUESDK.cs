@@ -139,7 +139,7 @@ namespace CUE.NET.Native
         private delegate CorsairError CorsairDisconnectPointer();
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate CorsairError CorsairGetDevicesPointer(IntPtr filter, int sizeMax, [In, Out] _CorsairDeviceInfo_V4[] devices, out int size);
+        private delegate CorsairError CorsairGetDevicesPointer(ref _CorsairDeviceFilter filter, int sizeMax, [In, Out] _CorsairDeviceInfo_V4[] devices, out int size);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate CorsairError CorsairGetDeviceInfoPointer([MarshalAs(UnmanagedType.LPStr)] string deviceId, out _CorsairDeviceInfo_V4 deviceInfo);
@@ -202,9 +202,9 @@ namespace CUE.NET.Native
         /// <summary>
         /// iCUE-SDK: Populates the buffer with filtered collection of devices.
         /// </summary>
-        internal static CorsairError CorsairGetDevices(IntPtr filter, int sizeMax, _CorsairDeviceInfo_V4[] devices, out int size)
+        internal static CorsairError CorsairGetDevices(ref _CorsairDeviceFilter filter, int sizeMax, _CorsairDeviceInfo_V4[] devices, out int size)
         {
-            return _corsairGetDevicesPointer(filter, sizeMax, devices, out size);
+            return _corsairGetDevicesPointer(ref filter, sizeMax, devices, out size);
         }
 
         /// <summary>
