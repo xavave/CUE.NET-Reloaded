@@ -1,0 +1,56 @@
+# This workflow will build a .NET Framework project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET Framework
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest  # Changed from ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+    
+    - name: Restore NuGet packages
+      run: nuget restore CUE.NET.sln
+    
+    - name: Build
+      run: msbuild CUE.NET.sln /p:Configuration=Release /p:Platform="Any CPU"
+    
+    - name: Organize CUE.NET Files
+      run: |
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release"
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release\bin"
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release\symbols"
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release\docs"
+        
+        # Copy DLLs
+        Copy-Item -Path "output\*CUE*.dll" -Destination ".\cuenet-release\bin\"
+        
+      shell: pwsh
+    
+    - name: Create Release Archive
+      run: |
+        $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+        Compress-Archive -Path ".\cuenet-release\*" -DestinationPath "CUE.NET-Release-$timestamp.zip" -CompressionLevel Optimal
+      shell: pwsh
+    
+    - name: Publish CUE.NET Release
+      uses: actions/upload-artifact@v4
+      with:
+        name: cuenet-release-package
+        path: CUE.NET-Release-*.zip
+        retention-days: 90
+    
+
