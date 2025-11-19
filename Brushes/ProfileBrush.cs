@@ -11,8 +11,8 @@ namespace CUE.NET.Brushes
     public class ProfileBrush : AbstractBrush
     {
         #region Properties & Fields
-        
-        private Dictionary<CorsairLedId, CorsairColor> _colors;
+
+        private Dictionary<uint, CorsairColor> _colors;
 
         #endregion
 
@@ -22,7 +22,7 @@ namespace CUE.NET.Brushes
         /// Initializes a new instance of the <see cref="ProfileBrush"/> class.
         /// </summary>
         /// <param name="keyLights">The light settings of the CUE profile.</param>
-        internal ProfileBrush(Dictionary<CorsairLedId, CorsairColor> keyLights)
+        internal ProfileBrush(Dictionary<uint, CorsairColor> keyLights)
         {
             this._colors = keyLights;
         }

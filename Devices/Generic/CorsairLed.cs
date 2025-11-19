@@ -23,9 +23,9 @@ namespace CUE.NET.Devices.Generic
         public ICueDevice Device { get; }
 
         /// <summary>
-        /// Gets the key-ID of the Led.
+        /// Gets the LED unique identifier (LUID) for API 4.x.
         /// </summary>
-        public CorsairLedId Id { get; }
+        public uint Id { get; }
 
         /// <summary>
         /// Gets a rectangle representing the physical location of the led.
@@ -69,9 +69,9 @@ namespace CUE.NET.Devices.Generic
         /// Initializes a new instance of the <see cref="CorsairLed"/> class.
         /// </summary>
         /// <param name="device">The <see cref="ICueDevice"/> the <see cref="CorsairLed"/> is associated with.</param>
-        /// <param name="id">The <see cref="CorsairLedId"/> of the <see cref="CorsairLed"/>.</param>
+        /// <param name="id">The LED unique identifier (LUID) of the <see cref="CorsairLed"/>.</param>
         /// <param name="ledRectangle">The rectangle representing the physical location of the <see cref="CorsairLed"/>.</param>
-        internal CorsairLed(ICueDevice device, CorsairLedId id, RectangleF ledRectangle)
+        internal CorsairLed(ICueDevice device, uint id, RectangleF ledRectangle)
         {
             this.Device = device;
             this.Id = id;
@@ -114,12 +114,12 @@ namespace CUE.NET.Devices.Generic
         #region Operators
 
         /// <summary>
-        /// Converts a <see cref="CorsairLed" /> to a <see cref="CorsairLedId" />.
+        /// Converts a <see cref="CorsairLed" /> to a uint LUID.
         /// </summary>
         /// <param name="led">The <see cref="CorsairLed"/> to convert.</param>
-        public static implicit operator CorsairLedId(CorsairLed led)
+        public static implicit operator uint(CorsairLed led)
         {
-            return led?.Id ?? CorsairLedId.Invalid;
+            return led?.Id ?? 0;
         }
 
         /// <summary>

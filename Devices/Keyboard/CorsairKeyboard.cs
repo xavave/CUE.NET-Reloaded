@@ -27,7 +27,7 @@ namespace CUE.NET.Devices.Keyboard
         #region Indexers
 
         /// <summary>
-        /// Gets the <see cref="CorsairLed" /> representing the given character by calling the SDK-method 'CorsairGetLedIdForKeyName'.<br />
+        /// Gets the <see cref="CorsairLed" /> representing the given character by calling the SDK-method 'CorsairGetLedLuidForKeyName'.<br />
         /// Note that this currently only works for letters.
         /// </summary>
         /// <param name="key">The character of the key.</param>
@@ -36,9 +36,13 @@ namespace CUE.NET.Devices.Keyboard
         {
             get
             {
-                CorsairLedId ledId = _CUESDK.CorsairGetLedIdForKeyName(key);
+                uint ledLuid;
+                CorsairError error = _CUESDK.CorsairGetLedLuidForKeyName(DeviceId, key, out ledLuid);
+                if (error != CorsairError.Success)
+                    return null;
+
                 CorsairLed led;
-                return LedMapping.TryGetValue(ledId, out led) ? led : null;
+                return LedMapping.TryGetValue(ledLuid, out led) ? led : null;
             }
         }
 
@@ -67,15 +71,19 @@ namespace CUE.NET.Devices.Keyboard
         /// </summary>
         public override void Initialize()
         {
-            _CorsairLedPositions nativeLedPositions = (_CorsairLedPositions)Marshal.PtrToStructure(_CUESDK.CorsairGetLedPositions(), typeof(_CorsairLedPositions));
-            int structSize = Marshal.SizeOf(typeof(_CorsairLedPosition));
-            IntPtr ptr = nativeLedPositions.pLedPosition;
-            for (int i = 0; i < nativeLedPositions.numberOfLed; i++)
-            {
-                _CorsairLedPosition ledPosition = (_CorsairLedPosition)Marshal.PtrToStructure(ptr, typeof(_CorsairLedPosition));
-                InitializeLed(ledPosition.ledId, new RectangleF((float)ledPosition.left, (float)ledPosition.top, (float)ledPosition.width, (float)ledPosition.height));
+            // API 4.x: Get LED positions for this device
+            _CorsairLedPosition_V4[] ledPositions = new _CorsairLedPosition_V4[256]; // max LEDs
+            int ledCount;
+            CorsairError error = _CUESDK.CorsairGetLedPositions(DeviceId, ledPositions.Length, ledPositions, out ledCount);
 
-                ptr = new IntPtr(ptr.ToInt64() + structSize);
+            if (error == CorsairError.Success)
+            {
+                for (int i = 0; i < ledCount; i++)
+                {
+                    _CorsairLedPosition_V4 ledPosition = ledPositions[i];
+                    // API 4.x provides center coordinates (cx, cy) - create 1mm x 1mm rectangle centered on the point
+                    InitializeLed(ledPosition.id, new RectangleF((float)(ledPosition.cx - 0.5), (float)(ledPosition.cy - 0.5), 1f, 1f));
+                }
             }
 
             base.Initialize();

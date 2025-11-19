@@ -76,11 +76,11 @@ namespace CUE.NET.Devices
         #region Indexer
 
         /// <summary>
-        /// Gets the <see cref="CorsairLed" /> with the specified ID.
+        /// Gets the <see cref="CorsairLed" /> with the specified LUID.
         /// </summary>
-        /// <param name="ledId">The ID of the LED to get.</param>
-        /// <returns>The LED with the specified ID or null if no LED is found.</returns>
-        CorsairLed this[CorsairLedId ledId] { get; }
+        /// <param name="ledLuid">The LUID of the LED to get.</param>
+        /// <returns>The LED with the specified LUID or null if no LED is found.</returns>
+        CorsairLed this[uint ledLuid] { get; }
 
         /// <summary>
         /// Gets the <see cref="CorsairLed" /> at the given physical location.

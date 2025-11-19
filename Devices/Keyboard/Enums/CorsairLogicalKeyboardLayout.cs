@@ -10,6 +10,11 @@ namespace CUE.NET.Devices.Keyboard.Enums
     /// </summary>
     public enum CorsairLogicalKeyboardLayout
     {
+        /// <summary>
+        /// Invalid/Unknown layout (API 4.x does not provide layout info)
+        /// </summary>
+        Invalid = 0,
+
         US_Int = 1,
         NA = 2,
         EU = 3,

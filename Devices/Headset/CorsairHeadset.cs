@@ -4,7 +4,9 @@
 
 using System.Drawing;
 using CUE.NET.Devices.Generic;
+using CUE.NET.Devices.Generic.Enums;
 using CUE.NET.Devices.Headset.Enums;
+using CUE.NET.Native;
 
 namespace CUE.NET.Devices.Headset
 {
@@ -43,8 +45,20 @@ namespace CUE.NET.Devices.Headset
         /// </summary>
         public override void Initialize()
         {
-            InitializeLed(CorsairHeadsetLedId.LeftLogo, new RectangleF(0, 0, 1, 1));
-            InitializeLed(CorsairHeadsetLedId.RightLogo, new RectangleF(1, 0, 1, 1));
+            // API 4.x: Get LED positions for this device
+            _CorsairLedPosition_V4[] ledPositions = new _CorsairLedPosition_V4[256]; // max LEDs
+            int ledCount;
+            CorsairError error = _CUESDK.CorsairGetLedPositions(DeviceId, ledPositions.Length, ledPositions, out ledCount);
+
+            if (error == CorsairError.Success)
+            {
+                for (int i = 0; i < ledCount; i++)
+                {
+                    _CorsairLedPosition_V4 ledPosition = ledPositions[i];
+                    // API 4.x provides center coordinates (cx, cy) - create 1 logical unit rectangle centered on the point
+                    InitializeLed(ledPosition.id, new RectangleF((float)(ledPosition.cx - 0.5), (float)(ledPosition.cy - 0.5), 1f, 1f));
+                }
+            }
 
             base.Initialize();
         }

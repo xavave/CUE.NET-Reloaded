@@ -1,46 +1,34 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
-using System;
-using System.Runtime.InteropServices;
 using CUE.NET.Native;
 
 namespace CUE.NET.Devices.Generic
 {
     /// <summary>
-    /// Managed wrapper for CorsairProtocolDetails.
+    /// Managed wrapper for CorsairSessionDetails (API 4.x).
     /// </summary>
     public class CorsairProtocolDetails
     {
         #region Properties & Fields
 
         /// <summary>
-        /// String containing version of SDK(like “1.0.0.1”).
-        /// Always contains valid value even if there was no CUE found.
+        /// Version of SDK client (like 4.0.1). Always contains valid value even if there was no iCUE found.
         /// </summary>
-        public string SdkVersion { get; }
+        public string ClientVersion { get; }
 
         /// <summary>
-        /// String containing version of CUE(like “1.0.0.1”) or NULL if CUE was not found.
+        /// Version of SDK server (like 4.0.1) or empty (0.0.0) if the iCUE was not found.
         /// </summary>
         public string ServerVersion { get; }
 
         /// <summary>
-        /// Integer that specifies version of protocol that is implemented by current SDK.
-        /// Numbering starts from 1.
-        /// Always contains valid value even if there was no CUE found.
+        /// Version of iCUE (like 3.33.100) or empty (0.0.0) if the iCUE was not found.
         /// </summary>
-        public int SdkProtocolVersion { get; }
+        public string ServerHostVersion { get; }
 
         /// <summary>
-        /// Integer that specifies version of protocol that is implemented by CUE.
-        /// Numbering starts from 1.
-        /// If CUE was not found then this value will be 0.
-        /// </summary>
-        public int ServerProtocolVersion { get; }
-
-        /// <summary>
-        /// Boolean that specifies if there were breaking changes between version of protocol implemented by server and client.
+        /// Boolean that specifies if there were breaking changes between version implemented by server and client.
         /// </summary>
         public bool BreakingChanges { get; }
 
@@ -49,16 +37,24 @@ namespace CUE.NET.Devices.Generic
         #region Constructors
 
         /// <summary>
-        /// Internal constructor of managed CorsairProtocolDetails.
+        /// Internal constructor of managed CorsairProtocolDetails from SessionDetails.
         /// </summary>
-        /// <param name="nativeDetails">The native CorsairProtocolDetails-struct</param>
-        internal CorsairProtocolDetails(_CorsairProtocolDetails nativeDetails)
+        /// <param name="nativeDetails">The native CorsairSessionDetails-struct</param>
+        internal CorsairProtocolDetails(_CorsairSessionDetails nativeDetails)
         {
-            this.SdkVersion = nativeDetails.sdkVersion == IntPtr.Zero ? null : Marshal.PtrToStringAnsi(nativeDetails.sdkVersion);
-            this.ServerVersion = nativeDetails.serverVersion == IntPtr.Zero ? null : Marshal.PtrToStringAnsi(nativeDetails.serverVersion);
-            this.SdkProtocolVersion = nativeDetails.sdkProtocolVersion;
-            this.ServerProtocolVersion = nativeDetails.serverProtocolVersion;
-            this.BreakingChanges = nativeDetails.breakingChanges != 0;
+            ClientVersion = FormatVersion(nativeDetails.clientVersion);
+            ServerVersion = FormatVersion(nativeDetails.serverVersion);
+            ServerHostVersion = FormatVersion(nativeDetails.serverHostVersion);
+
+            // Breaking changes only if server is not connected (version 0.0.0)
+            // API 4.x is designed to be forward and backward compatible within the same major version
+            // so we don't enforce strict version matching
+            BreakingChanges = nativeDetails.serverVersion.major == 0;
+        }
+
+        private static string FormatVersion(_CorsairVersion version)
+        {
+            return $"{version.major}.{version.minor}.{version.patch}";
         }
 
         #endregion

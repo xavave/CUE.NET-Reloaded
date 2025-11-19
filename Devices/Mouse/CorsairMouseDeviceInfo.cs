@@ -24,13 +24,14 @@ namespace CUE.NET.Devices.Mouse
         #region Constructors
 
         /// <summary>
-        /// Internal constructor of managed <see cref="CorsairMouseDeviceInfo" />.
+        /// Internal constructor of managed <see cref="CorsairMouseDeviceInfo" /> for API 4.x.
         /// </summary>
-        /// <param name="nativeInfo">The native <see cref="_CorsairDeviceInfo" />-struct</param>
-        internal CorsairMouseDeviceInfo(_CorsairDeviceInfo nativeInfo)
+        /// <param name="nativeInfo">The native <see cref="_CorsairDeviceInfo_V4" />-struct</param>
+        internal CorsairMouseDeviceInfo(_CorsairDeviceInfo_V4 nativeInfo)
             : base(nativeInfo)
         {
-            this.PhysicalLayout = (CorsairPhysicalMouseLayout)nativeInfo.physicalLayout;
+            // Note: API 4.x doesn't provide layout info in device info
+            this.PhysicalLayout = CorsairPhysicalMouseLayout.Unknown;
         }
 
         #endregion

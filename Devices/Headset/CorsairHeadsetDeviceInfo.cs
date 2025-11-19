@@ -11,10 +11,10 @@ namespace CUE.NET.Devices.Headset
         #region Constructors
 
         /// <summary>
-        /// Internal constructor of managed <see cref="CorsairHeadsetDeviceInfo" />.
+        /// Internal constructor of managed <see cref="CorsairHeadsetDeviceInfo" /> for API 4.x.
         /// </summary>
-        /// <param name="nativeInfo">The native <see cref="_CorsairDeviceInfo" />-struct</param>
-        internal CorsairHeadsetDeviceInfo(_CorsairDeviceInfo nativeInfo)
+        /// <param name="nativeInfo">The native <see cref="_CorsairDeviceInfo_V4" />-struct</param>
+        internal CorsairHeadsetDeviceInfo(_CorsairDeviceInfo_V4 nativeInfo)
             : base(nativeInfo)
         { }
 

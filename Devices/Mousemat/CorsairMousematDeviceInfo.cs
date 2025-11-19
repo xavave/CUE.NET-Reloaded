@@ -14,10 +14,10 @@ namespace CUE.NET.Devices.Mousemat
         #region Constructors
 
         /// <summary>
-        /// Internal constructor of managed <see cref="CorsairMousematDeviceInfo" />.
+        /// Internal constructor of managed <see cref="CorsairMousematDeviceInfo" /> for API 4.x.
         /// </summary>
-        /// <param name="nativeInfo">The native <see cref="_CorsairDeviceInfo" />-struct</param>
-        internal CorsairMousematDeviceInfo(_CorsairDeviceInfo nativeInfo)
+        /// <param name="nativeInfo">The native <see cref="_CorsairDeviceInfo_V4" />-struct</param>
+        internal CorsairMousematDeviceInfo(_CorsairDeviceInfo_V4 nativeInfo)
             : base(nativeInfo)
         { }
 

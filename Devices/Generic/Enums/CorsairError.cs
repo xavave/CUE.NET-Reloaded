@@ -11,32 +11,44 @@ namespace CUE.NET.Devices.Generic.Enums
         /// <summary>
         /// If previously called function completed successfully.
         /// </summary>
-        Success,
+        Success = 0,
 
         /// <summary>
-        /// CUE is not running or was shut down or third-party control is disabled in CUE settings. (runtime error)
+        /// If iCUE is not running or was shut down or third-party control is disabled in iCUE settings (runtime error),
+        /// or if developer did not call CorsairConnect after calling CorsairDisconnect or on app start (developer error).
         /// </summary>
-        ServerNotFound,
+        NotConnected = 1,
 
         /// <summary>
         /// If some other client has or took over exclusive control. (runtime error)
         /// </summary>
-        NoControl,
-
-        /// <summary>
-        /// If developer did not perform protocol handshake. (developer error)
-        /// </summary>
-        ProtocolHandshakeMissing,
+        NoControl = 2,
 
         /// <summary>
         /// If developer is calling the function that is not supported by the server (either because protocol has broken by server or client or because the function is new and server is too old.
-        /// Check CorsairProtocolDetails for details). (developer error)
+        /// Check CorsairSessionDetails for details). (developer error)
         /// </summary>
-        IncompatibleProtocol,
+        IncompatibleProtocol = 3,
 
         /// <summary>
         /// If developer supplied invalid arguments to the function (for specifics look at function descriptions). (developer error)
         /// </summary>
-        InvalidArguments
+        InvalidArguments = 4,
+
+        /// <summary>
+        /// If developer is calling the function that is not allowed due to current state (reading improper properties from device,
+        /// or setting callback when it has already been set). (developer error)
+        /// </summary>
+        InvalidOperation = 5,
+
+        /// <summary>
+        /// If invalid device id has been supplied as an argument to the function (when device id refers to disconnected device). (runtime error)
+        /// </summary>
+        DeviceNotFound = 6,
+
+        /// <summary>
+        /// If specific functionality (key interception) is disabled in iCUE settings. (runtime error)
+        /// </summary>
+        NotAllowed = 7
     };
 }

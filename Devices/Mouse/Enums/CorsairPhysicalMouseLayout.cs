@@ -9,6 +9,11 @@ namespace CUE.NET.Devices.Mouse.Enums
     public enum CorsairPhysicalMouseLayout
     {
         /// <summary>
+        /// Unknown layout (API 4.x does not provide layout info)
+        /// </summary>
+        Unknown = 0,
+
+        /// <summary>
         /// Zone1-Mouse
         /// </summary>
         Zones1 = 6,

@@ -50,36 +50,19 @@ namespace CUE.NET.Devices.Mouse
         /// </summary>
         public override void Initialize()
         {
-            // Glaive is a special flake that doesn't follow the default layout
-            if (MouseDeviceInfo.Model == "GLAIVE RGB")
+            // API 4.x: Get LED positions for this device
+            _CorsairLedPosition_V4[] ledPositions = new _CorsairLedPosition_V4[256]; // max LEDs
+            int ledCount;
+            CorsairError error = _CUESDK.CorsairGetLedPositions(DeviceId, ledPositions.Length, ledPositions, out ledCount);
+
+            if (error == CorsairError.Success)
             {
-                InitializeLed(CorsairMouseLedId.B1, new RectangleF(0, 0, 1, 1)); // Logo
-                InitializeLed(CorsairMouseLedId.B2, new RectangleF(2, 0, 1, 1)); // Front
-                InitializeLed(CorsairMouseLedId.B5, new RectangleF(3, 0, 1, 1)); // Sides
-                return;
-            }
-            switch (MouseDeviceInfo.PhysicalLayout)
-            {
-                case CorsairPhysicalMouseLayout.Zones1:
-                    InitializeLed(CorsairMouseLedId.B1, new RectangleF(0, 0, 1, 1));
-                    break;
-                case CorsairPhysicalMouseLayout.Zones2:
-                    InitializeLed(CorsairMouseLedId.B1, new RectangleF(0, 0, 1, 1));
-                    InitializeLed(CorsairMouseLedId.B2, new RectangleF(1, 0, 1, 1));
-                    break;
-                case CorsairPhysicalMouseLayout.Zones3:
-                    InitializeLed(CorsairMouseLedId.B1, new RectangleF(0, 0, 1, 1));
-                    InitializeLed(CorsairMouseLedId.B2, new RectangleF(1, 0, 1, 1));
-                    InitializeLed(CorsairMouseLedId.B3, new RectangleF(2, 0, 1, 1));
-                    break;
-                case CorsairPhysicalMouseLayout.Zones4:
-                    InitializeLed(CorsairMouseLedId.B1, new RectangleF(0, 0, 1, 1));
-                    InitializeLed(CorsairMouseLedId.B2, new RectangleF(1, 0, 1, 1));
-                    InitializeLed(CorsairMouseLedId.B3, new RectangleF(2, 0, 1, 1));
-                    InitializeLed(CorsairMouseLedId.B4, new RectangleF(3, 0, 1, 1));
-                    break;
-                default:
-                    throw new WrapperException($"Can't initial mouse with layout '{MouseDeviceInfo.PhysicalLayout}'");
+                for (int i = 0; i < ledCount; i++)
+                {
+                    _CorsairLedPosition_V4 ledPosition = ledPositions[i];
+                    // API 4.x provides center coordinates (cx, cy) - create 1mm x 1mm rectangle centered on the point
+                    InitializeLed(ledPosition.id, new RectangleF((float)(ledPosition.cx - 0.5), (float)(ledPosition.cy - 0.5), 1f, 1f));
+                }
             }
 
             base.Initialize();

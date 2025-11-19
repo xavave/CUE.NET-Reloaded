@@ -84,8 +84,8 @@ namespace CUE.NET.Groups
         /// Initializes a new instance of the <see cref="ListLedGroup"/> class.
         /// </summary>
         /// <param name="device">The device this ledgroup belongs to.</param>
-        /// <param name="leds">The IDs of the initial LEDs of this ledgroup.</param>
-        public ListLedGroup(ICueDevice device, params CorsairLedId[] leds)
+        /// <param name="leds">The LUIDs of the initial LEDs of this ledgroup.</param>
+        public ListLedGroup(ICueDevice device, params uint[] leds)
             : this(device, true, leds)
         { }
 
@@ -93,8 +93,8 @@ namespace CUE.NET.Groups
         /// Initializes a new instance of the <see cref="ListLedGroup"/> class.
         /// </summary>
         /// <param name="device">The device this ledgroup belongs to.</param>
-        /// <param name="leds">The IDs of the initial LEDs of this ledgroup.</param>
-        public ListLedGroup(ICueDevice device, IEnumerable<CorsairLedId> leds)
+        /// <param name="leds">The LUIDs of the initial LEDs of this ledgroup.</param>
+        public ListLedGroup(ICueDevice device, IEnumerable<uint> leds)
             : this(device, true, leds)
         { }
 
@@ -103,8 +103,8 @@ namespace CUE.NET.Groups
         /// </summary>
         /// <param name="device">The device this ledgroup belongs to.</param>
         /// <param name="autoAttach">Specifies whether this ledgroup should be automatically attached or not.</param>
-        /// <param name="leds">The IDs of the initial LEDs of this ledgroup.</param>
-        public ListLedGroup(ICueDevice device, bool autoAttach, params CorsairLedId[] leds)
+        /// <param name="leds">The LUIDs of the initial LEDs of this ledgroup.</param>
+        public ListLedGroup(ICueDevice device, bool autoAttach, params uint[] leds)
             : base(device, autoAttach)
         {
             AddLeds(leds);
@@ -115,8 +115,8 @@ namespace CUE.NET.Groups
         /// </summary>
         /// <param name="device">The device this ledgroup belongs to.</param>
         /// <param name="autoAttach">Specifies whether this ledgroup should be automatically attached or not.</param>
-        /// <param name="leds">The IDs of the initial LEDs of this ledgroup.</param>
-        public ListLedGroup(ICueDevice device, bool autoAttach, IEnumerable<CorsairLedId> leds)
+        /// <param name="leds">The LUIDs of the initial LEDs of this ledgroup.</param>
+        public ListLedGroup(ICueDevice device, bool autoAttach, IEnumerable<uint> leds)
             : base(device, autoAttach)
         {
             AddLeds(leds);
@@ -138,8 +138,8 @@ namespace CUE.NET.Groups
         /// <summary>
         /// Adds the given LED(s) to the ledgroup.
         /// </summary>
-        /// <param name="ledIds">The ID(s) of the LED(s) to add.</param>
-        public void AddLed(params CorsairLedId[] ledIds)
+        /// <param name="ledIds">The LUID(s) of the LED(s) to add.</param>
+        public void AddLed(params uint[] ledIds)
         {
             AddLeds(ledIds);
         }
@@ -160,12 +160,12 @@ namespace CUE.NET.Groups
         /// <summary>
         /// Adds the given LEDs to the ledgroup.
         /// </summary>
-        /// <param name="ledIds">The IDs of the LEDs to add.</param>
-        public void AddLeds(IEnumerable<CorsairLedId> ledIds)
+        /// <param name="ledIds">The LUIDs of the LEDs to add.</param>
+        public void AddLeds(IEnumerable<uint> ledIds)
         {
             if (ledIds == null) return;
 
-            foreach (CorsairLedId ledId in ledIds)
+            foreach (uint ledId in ledIds)
                 AddLed(Device[ledId]);
         }
 
@@ -181,8 +181,8 @@ namespace CUE.NET.Groups
         /// <summary>
         /// Removes the given LED(s) from the ledgroup.
         /// </summary>
-        /// <param name="ledIds">The ID(s) of the LED(s) to remove.</param>
-        public void RemoveLed(params CorsairLedId[] ledIds)
+        /// <param name="ledIds">The LUID(s) of the LED(s) to remove.</param>
+        public void RemoveLed(params uint[] ledIds)
         {
             RemoveLeds(ledIds);
         }
@@ -203,12 +203,12 @@ namespace CUE.NET.Groups
         /// <summary>
         /// Removes the given LEDs from the ledgroup.
         /// </summary>
-        /// <param name="ledIds">The IDs of the LEDs to remove.</param>
-        public void RemoveLeds(IEnumerable<CorsairLedId> ledIds)
+        /// <param name="ledIds">The LUIDs of the LEDs to remove.</param>
+        public void RemoveLeds(IEnumerable<uint> ledIds)
         {
             if (ledIds == null) return;
 
-            foreach (CorsairLedId ledId in ledIds)
+            foreach (uint ledId in ledIds)
                 RemoveLed(Device[ledId]);
         }
 
@@ -225,9 +225,9 @@ namespace CUE.NET.Groups
         /// <summary>
         /// Checks if a given LED is contained by this ledgroup.
         /// </summary>
-        /// <param name="ledId">The ID of the LED which should be checked.</param>
+        /// <param name="ledId">The LUID of the LED which should be checked.</param>
         /// <returns><c>true</c> if the LED is contained by this ledgroup; otherwise, <c>false</c>.</returns>
-        public bool ContainsLed(CorsairLedId ledId)
+        public bool ContainsLed(uint ledId)
         {
             return ContainsLed(Device[ledId]);
         }

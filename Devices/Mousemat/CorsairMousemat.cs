@@ -49,39 +49,21 @@ namespace CUE.NET.Devices.Mousemat
         /// </summary>
         public override void Initialize()
         {
-            int deviceCount = _CUESDK.CorsairGetDeviceCount();
+            // API 4.x: Get LED positions for this device
+            _CorsairLedPosition_V4[] ledPositions = new _CorsairLedPosition_V4[256]; // max LEDs
+            int ledCount;
+            CorsairError error = _CUESDK.CorsairGetLedPositions(DeviceId, ledPositions.Length, ledPositions, out ledCount);
 
-            // Get mousemat device index
-            int mousematIndex = -1;
-            for (int i = 0; i < deviceCount; i++)
+            if (error == CorsairError.Success)
             {
-                _CorsairDeviceInfo nativeDeviceInfo = (_CorsairDeviceInfo)Marshal.PtrToStructure(_CUESDK.CorsairGetDeviceInfo(i), typeof(_CorsairDeviceInfo));
-                GenericDeviceInfo info = new GenericDeviceInfo(nativeDeviceInfo);
-                if (info.Type != CorsairDeviceType.Mousemat)
-                    continue;
-
-                mousematIndex = i;
-                break;
+                // Sort by LED ID for easy iteration by clients
+                for (int i = 0; i < ledCount; i++)
+                {
+                    _CorsairLedPosition_V4 ledPosition = ledPositions[i];
+                    // API 4.x provides center coordinates (cx, cy) - create 1mm x 1mm rectangle centered on the point
+                    InitializeLed(ledPosition.id, new RectangleF((float)(ledPosition.cx - 0.5), (float)(ledPosition.cy - 0.5), 1f, 1f));
+                }
             }
-            if (mousematIndex < 0)
-                throw new WrapperException("Can't determine mousemat device index");
-
-            _CorsairLedPositions nativeLedPositions = (_CorsairLedPositions)Marshal.PtrToStructure(_CUESDK.CorsairGetLedPositionsByDeviceIndex(mousematIndex), typeof(_CorsairLedPositions));
-            int structSize = Marshal.SizeOf(typeof(_CorsairLedPosition));
-            IntPtr ptr = nativeLedPositions.pLedPosition;
-
-            // Put the positions in an array for sorting later on
-            List<_CorsairLedPosition> positions = new List<_CorsairLedPosition>();
-            for (int i = 0; i < nativeLedPositions.numberOfLed; i++)
-            {
-                _CorsairLedPosition ledPosition = (_CorsairLedPosition)Marshal.PtrToStructure(ptr, typeof(_CorsairLedPosition));
-                ptr = new IntPtr(ptr.ToInt64() + structSize);
-                positions.Add(ledPosition);
-            }
-
-            // Sort for easy iteration by clients
-            foreach (_CorsairLedPosition ledPosition in positions.OrderBy(p => p.ledId))
-                InitializeLed(ledPosition.ledId, new RectangleF((float)ledPosition.left, (float)ledPosition.top, (float)ledPosition.width, (float)ledPosition.height));
 
             base.Initialize();
         }

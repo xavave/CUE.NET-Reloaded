@@ -22,7 +22,7 @@ namespace CUE.NET.Profiles
         /// </summary>
         internal string Name { get; }
 
-        private Dictionary<CorsairLedId, CorsairColor> _colors;
+        private Dictionary<uint, CorsairColor> _colors;
 
         #endregion
 
@@ -73,7 +73,7 @@ namespace CUE.NET.Profiles
 
                             return new
                             {
-                                key = (CorsairLedId)Enum.Parse(typeof(CorsairLedId), name),
+                                key = (uint)(CorsairLedId)Enum.Parse(typeof(CorsairLedId), name),
                                 color = (CorsairColor)ColorTranslator.FromHtml(x.Attribute("color").Value)
                             };
                         })

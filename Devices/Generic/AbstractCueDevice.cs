@@ -29,7 +29,7 @@ namespace CUE.NET.Devices.Generic
 
         private static DateTime _lastUpdate = DateTime.Now;
 
-        private Dictionary<CorsairLedId, CorsairColor> _colorDataSave;
+        private Dictionary<uint, CorsairColor> _colorDataSave;
 
         /// <summary>
         /// Gets generic information provided by CUE for the device.
@@ -37,14 +37,19 @@ namespace CUE.NET.Devices.Generic
         public IDeviceInfo DeviceInfo { get; }
 
         /// <summary>
+        /// Gets the unique device identifier.
+        /// </summary>
+        public string DeviceId => (DeviceInfo as GenericDeviceInfo)?.DeviceId;
+
+        /// <summary>
         /// Gets the rectangle containing all LEDs of the device.
         /// </summary>
         public RectangleF DeviceRectangle { get; protected set; }
 
         /// <summary>
-        /// Gets a dictionary containing all LEDs of the device.
+        /// Gets a dictionary containing all LEDs of the device (mapped by LED LUID).
         /// </summary>
-        protected Dictionary<CorsairLedId, CorsairLed> LedMapping { get; } = new Dictionary<CorsairLedId, CorsairLed>();
+        protected Dictionary<uint, CorsairLed> LedMapping { get; } = new Dictionary<uint, CorsairLed>();
 
         /// <summary>
         /// Gets a read-only collection containing the LEDs of the device.
@@ -71,16 +76,16 @@ namespace CUE.NET.Devices.Generic
         #region Indexers
 
         /// <summary>
-        /// Gets the <see cref="CorsairLed" /> with the specified ID.
+        /// Gets the <see cref="CorsairLed" /> with the specified LUID.
         /// </summary>
-        /// <param name="ledId">The ID of the LED to get.</param>
-        /// <returns>The LED with the specified ID or null if no LED is found.</returns>
-        public CorsairLed this[CorsairLedId ledId]
+        /// <param name="ledLuid">The LUID of the LED to get.</param>
+        /// <returns>The LED with the specified LUID or null if no LED is found.</returns>
+        public CorsairLed this[uint ledLuid]
         {
             get
             {
                 CorsairLed key;
-                return LedMapping.TryGetValue(ledId, out key) ? key : null;
+                return LedMapping.TryGetValue(ledLuid, out key) ? key : null;
             }
         }
 
@@ -160,17 +165,17 @@ namespace CUE.NET.Devices.Generic
         }
 
         /// <summary>
-        /// Initializes the LED-Object with the specified id.
+        /// Initializes the LED-Object with the specified LUID.
         /// </summary>
-        /// <param name="ledId">The LED-Id to initialize.</param>
+        /// <param name="ledLuid">The LED-LUID to initialize.</param>
         /// <param name="ledRectangle">The rectangle representing the position of the LED to initialize.</param>
         /// <returns></returns>
-        protected CorsairLed InitializeLed(CorsairLedId ledId, RectangleF ledRectangle)
+        protected CorsairLed InitializeLed(uint ledLuid, RectangleF ledRectangle)
         {
-            if (LedMapping.ContainsKey(ledId)) return null;
+            if (LedMapping.ContainsKey(ledLuid)) return null;
 
-            CorsairLed led = new CorsairLed(this, ledId, ledRectangle);
-            LedMapping.Add(ledId, led);
+            CorsairLed led = new CorsairLed(this, ledLuid, ledRectangle);
+            LedMapping.Add(ledLuid, led);
             return led;
         }
 
@@ -279,26 +284,18 @@ namespace CUE.NET.Devices.Generic
 
             OnLedsUpdating(updateRequests);
 
-            if (updateRequests.Any()) // CUE seems to crash if 'CorsairSetLedsColors' is called with a zero length array
+            if (updateRequests.Any() && !string.IsNullOrEmpty(DeviceId))
             {
-                int structSize = Marshal.SizeOf(typeof(_CorsairLedColor));
-                IntPtr ptr = Marshal.AllocHGlobal(structSize * updateRequests.Count);
-                IntPtr addPtr = new IntPtr(ptr.ToInt64());
-                foreach (LedUpateRequest ledUpdateRequest in updateRequests)
+                _CorsairLedColor_V4[] colors = updateRequests.Select(x => new _CorsairLedColor_V4
                 {
-                    _CorsairLedColor color = new _CorsairLedColor
-                    {
-                        ledId = (int)ledUpdateRequest.LedId,
-                        r = ledUpdateRequest.Color.R,
-                        g = ledUpdateRequest.Color.G,
-                        b = ledUpdateRequest.Color.B
-                    };
+                    id = x.LedId,
+                    r = x.Color.R,
+                    g = x.Color.G,
+                    b = x.Color.B,
+                    a = x.Color.A
+                }).ToArray();
 
-                    Marshal.StructureToPtr(color, addPtr, false);
-                    addPtr = new IntPtr(addPtr.ToInt64() + structSize);
-                }
-                _CUESDK.CorsairSetLedsColors(updateRequests.Count, ptr);
-                Marshal.FreeHGlobal(ptr);
+                _CUESDK.CorsairSetLedColors(DeviceId, colors.Length, colors);
             }
 
             OnLedsUpdated(updateRequests);
@@ -307,7 +304,7 @@ namespace CUE.NET.Devices.Generic
         /// <inheritdoc />
         public void SyncColors()
         {
-            Dictionary<CorsairLedId, CorsairColor> colorData = GetColors();
+            Dictionary<uint, CorsairColor> colorData = GetColors();
             ApplyColorData(colorData);
             Update(true, true);
         }
@@ -325,38 +322,36 @@ namespace CUE.NET.Devices.Generic
             Update(true, true);
         }
 
-        private void ApplyColorData(Dictionary<CorsairLedId, CorsairColor> colorData)
+        private void ApplyColorData(Dictionary<uint, CorsairColor> colorData)
         {
             if (colorData == null) return;
 
-            foreach (KeyValuePair<CorsairLedId, CorsairColor> corsairColor in _colorDataSave)
-                LedMapping[corsairColor.Key].Color = corsairColor.Value;
+            foreach (KeyValuePair<uint, CorsairColor> corsairColor in colorData)
+                if (LedMapping.ContainsKey(corsairColor.Key))
+                    LedMapping[corsairColor.Key].Color = corsairColor.Value;
         }
 
-        private Dictionary<CorsairLedId, CorsairColor> GetColors()
+        private Dictionary<uint, CorsairColor> GetColors()
         {
-            int structSize = Marshal.SizeOf(typeof(_CorsairLedColor));
-            IntPtr ptr = Marshal.AllocHGlobal(structSize * LedMapping.Count);
-            IntPtr addPtr = new IntPtr(ptr.ToInt64());
-            foreach (KeyValuePair<CorsairLedId, CorsairLed> led in LedMapping)
+            if (string.IsNullOrEmpty(DeviceId))
+                return new Dictionary<uint, CorsairColor>();
+
+            _CorsairLedColor_V4[] colors = LedMapping.Select(x => new _CorsairLedColor_V4
             {
-                _CorsairLedColor color = new _CorsairLedColor { ledId = (int)led.Value.Id };
-                Marshal.StructureToPtr(color, addPtr, false);
-                addPtr = new IntPtr(addPtr.ToInt64() + structSize);
-            }
-            _CUESDK.CorsairGetLedsColors(LedMapping.Count, ptr);
+                id = x.Key,
+                r = 0,
+                g = 0,
+                b = 0,
+                a = 0
+            }).ToArray();
 
-            IntPtr readPtr = ptr;
-            Dictionary<CorsairLedId, CorsairColor> colorData = new Dictionary<CorsairLedId, CorsairColor>();
-            for (int i = 0; i < LedMapping.Count; i++)
+            _CUESDK.CorsairGetLedColors(DeviceId, colors.Length, colors);
+
+            Dictionary<uint, CorsairColor> colorData = new Dictionary<uint, CorsairColor>();
+            foreach (_CorsairLedColor_V4 ledColor in colors)
             {
-                _CorsairLedColor ledColor = (_CorsairLedColor)Marshal.PtrToStructure(readPtr, typeof(_CorsairLedColor));
-                colorData.Add((CorsairLedId)ledColor.ledId, new CorsairColor((byte)ledColor.r, (byte)ledColor.g, (byte)ledColor.b));
-
-                readPtr = new IntPtr(readPtr.ToInt64() + structSize);
+                colorData[ledColor.id] = new CorsairColor(ledColor.a, ledColor.r, ledColor.g, ledColor.b);
             }
-
-            Marshal.FreeHGlobal(ptr);
 
             return colorData;
         }

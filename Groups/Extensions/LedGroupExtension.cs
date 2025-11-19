@@ -32,12 +32,12 @@ namespace CUE.NET.Groups.Extensions
         /// Returns a new <see cref="ListLedGroup" /> which contains all LEDs from the given ledgroup excluding the specified ones.
         /// </summary>
         /// <param name="ledGroup">The base ledgroup.</param>
-        /// <param name="ledIds">The ids of the LEDs to exclude.</param>
+        /// <param name="ledIds">The LUIDs of the LEDs to exclude.</param>
         /// <returns>The new <see cref="ListLedGroup" />.</returns>
-        public static ListLedGroup Exclude(this AbstractLedGroup ledGroup, params CorsairLedId[] ledIds)
+        public static ListLedGroup Exclude(this AbstractLedGroup ledGroup, params uint[] ledIds)
         {
             ListLedGroup listLedGroup = ledGroup.ToListLedGroup();
-            foreach (CorsairLedId ledId in ledIds)
+            foreach (uint ledId in ledIds)
                 listLedGroup.RemoveLed(ledId);
             return listLedGroup;
         }

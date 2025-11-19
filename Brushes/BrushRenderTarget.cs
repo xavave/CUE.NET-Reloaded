@@ -15,9 +15,9 @@ namespace CUE.NET.Brushes
         #region Properties & Fields
 
         /// <summary>
-        /// Gets the ID of the target-LED.
+        /// Gets the LUID of the target-LED.
         /// </summary>
-        public CorsairLedId LedId { get; }
+        public uint LedId { get; }
 
         /// <summary>
         /// Gets the rectangle representing the area to render the target-LED.
@@ -36,9 +36,9 @@ namespace CUE.NET.Brushes
         /// <summary>
         /// Initializes a new instance of the <see cref="BrushRenderTarget"/> class.
         /// </summary>
-        /// <param name="ledId">The ID of the target-LED.</param>
+        /// <param name="ledId">The LUID of the target-LED.</param>
         /// <param name="rectangle">The rectangle representing the area to render the target-LED.</param>
-        public BrushRenderTarget(CorsairLedId ledId, RectangleF rectangle)
+        public BrushRenderTarget(uint ledId, RectangleF rectangle)
         {
             this.Rectangle = rectangle;
             this.LedId = ledId;

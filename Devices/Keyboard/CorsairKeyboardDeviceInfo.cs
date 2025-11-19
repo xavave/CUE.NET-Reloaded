@@ -29,14 +29,16 @@ namespace CUE.NET.Devices.Keyboard
         #region Constructors
 
         /// <summary>
-        /// Internal constructor of managed CorsairDeviceInfo.
+        /// Internal constructor of managed CorsairDeviceInfo for API 4.x.
         /// </summary>
-        /// <param name="nativeInfo">The native CorsairDeviceInfo-struct</param>
-        internal CorsairKeyboardDeviceInfo(_CorsairDeviceInfo nativeInfo)
+        /// <param name="nativeInfo">The native CorsairDeviceInfo_V4-struct</param>
+        internal CorsairKeyboardDeviceInfo(_CorsairDeviceInfo_V4 nativeInfo)
             : base(nativeInfo)
         {
-            this.PhysicalLayout = (CorsairPhysicalKeyboardLayout)nativeInfo.physicalLayout;
-            this.LogicalLayout = (CorsairLogicalKeyboardLayout)nativeInfo.logicalLayout;
+            // Note: API 4.x doesn't provide layout info in device info
+            // These should be queried via CorsairGetDevicePropertyInfo if needed
+            this.PhysicalLayout = CorsairPhysicalKeyboardLayout.Invalid;
+            this.LogicalLayout = CorsairLogicalKeyboardLayout.Invalid;
         }
 
         #endregion

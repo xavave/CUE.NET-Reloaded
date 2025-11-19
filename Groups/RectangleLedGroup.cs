@@ -57,11 +57,11 @@ namespace CUE.NET.Groups
         /// Initializes a new instance of the <see cref="RectangleLedGroup"/> class.
         /// </summary>
         /// <param name="device">The device this ledgroup belongs to.</param>
-        /// <param name="fromLed">They ID of the first LED to calculate the rectangle of this ledgroup from.</param>
-        /// <param name="toLed">They ID of the second LED to calculate the rectangle of this ledgroup from.</param>
+        /// <param name="fromLed">The LUID of the first LED to calculate the rectangle of this ledgroup from.</param>
+        /// <param name="toLed">The LUID of the second LED to calculate the rectangle of this ledgroup from.</param>
         /// <param name="minOverlayPercentage">(optional) The minimal percentage overlay a LED must have with the <see cref="Rectangle" /> to be taken into the ledgroup. (default: 0.5f)</param>
         /// <param name="autoAttach">(optional) Specifies whether this group should be automatically attached or not. (default: true)</param>
-        public RectangleLedGroup(ICueDevice device, CorsairLedId fromLed, CorsairLedId toLed, float minOverlayPercentage = 0.5f, bool autoAttach = true)
+        public RectangleLedGroup(ICueDevice device, uint fromLed, uint toLed, float minOverlayPercentage = 0.5f, bool autoAttach = true)
             : this(device, device[fromLed], device[toLed], minOverlayPercentage, autoAttach)
         { }
 
