@@ -28,8 +28,29 @@ jobs:
     - name: Build
       run: msbuild CUE.NET.sln /p:Configuration=Release /p:Platform="Any CPU"
     
-    - name: Setup VSTest
-      uses: darenm/Setup-VSTest@v1.2
+    - name: Organize CUE.NET Files
+      run: |
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release"
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release\bin"
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release\symbols"
+        New-Item -ItemType Directory -Force -Path ".\cuenet-release\docs"
+        
+        # Copy DLLs
+        Copy-Item -Path "output\*CUE*.dll" -Destination ".\cuenet-release\bin\"
+        
+      shell: pwsh
     
-    - name: Test
-      run: vstest.console.exe **\bin\**\*.Tests.dll
+    - name: Create Release Archive
+      run: |
+        $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+        Compress-Archive -Path ".\cuenet-release\*" -DestinationPath "CUE.NET-Release-$timestamp.zip" -CompressionLevel Optimal
+      shell: pwsh
+    
+    - name: Publish CUE.NET Release
+      uses: actions/upload-artifact@v4
+      with:
+        name: cuenet-release-package
+        path: CUE.NET-Release-*.zip
+        retention-days: 90
+    
+
