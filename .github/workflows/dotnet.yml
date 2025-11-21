@@ -5,9 +5,10 @@ name: .NET Framework
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "claude/**" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
