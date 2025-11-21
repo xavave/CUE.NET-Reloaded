@@ -67,6 +67,13 @@ namespace CUE.NET.Native
             _corsairReleaseControlPointer = (CorsairReleaseControlPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairReleaseControl"), typeof(CorsairReleaseControlPointer));
             _corsairSubscribeForEventsPointer = (CorsairSubscribeForEventsPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairSubscribeForEvents"), typeof(CorsairSubscribeForEventsPointer));
             _corsairUnsubscribeFromEventsPointer = (CorsairUnsubscribeFromEventsPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairUnsubscribeFromEvents"), typeof(CorsairUnsubscribeFromEventsPointer));
+            _corsairConfigureKeyEventPointer = (CorsairConfigureKeyEventPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairConfigureKeyEvent"), typeof(CorsairConfigureKeyEventPointer));
+            _corsairGetDevicePropertyInfoPointer = (CorsairGetDevicePropertyInfoPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairGetDevicePropertyInfo"), typeof(CorsairGetDevicePropertyInfoPointer));
+            _corsairReadDevicePropertyPointer = (CorsairReadDevicePropertyPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairReadDeviceProperty"), typeof(CorsairReadDevicePropertyPointer));
+            _corsairWriteDevicePropertyPointer = (CorsairWriteDevicePropertyPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairWriteDeviceProperty"), typeof(CorsairWriteDevicePropertyPointer));
+            _corsairFreePropertyPointer = (CorsairFreePropertyPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairFreeProperty"), typeof(CorsairFreePropertyPointer));
+            _corsairSetLedColorsBufferPointer = (CorsairSetLedColorsBufferPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairSetLedColorsBuffer"), typeof(CorsairSetLedColorsBufferPointer));
+            _corsairSetLedColorsFlushBufferAsyncPointer = (CorsairSetLedColorsFlushBufferAsyncPointer)Marshal.GetDelegateForFunctionPointer(GetProcAddress(_dllHandle, "CorsairSetLedColorsFlushBufferAsync"), typeof(CorsairSetLedColorsFlushBufferAsyncPointer));
         }
 
         private static void UnloadCUESDK()
@@ -118,6 +125,13 @@ namespace CUE.NET.Native
         private static CorsairReleaseControlPointer _corsairReleaseControlPointer;
         private static CorsairSubscribeForEventsPointer _corsairSubscribeForEventsPointer;
         private static CorsairUnsubscribeFromEventsPointer _corsairUnsubscribeFromEventsPointer;
+        private static CorsairConfigureKeyEventPointer _corsairConfigureKeyEventPointer;
+        private static CorsairGetDevicePropertyInfoPointer _corsairGetDevicePropertyInfoPointer;
+        private static CorsairReadDevicePropertyPointer _corsairReadDevicePropertyPointer;
+        private static CorsairWriteDevicePropertyPointer _corsairWriteDevicePropertyPointer;
+        private static CorsairFreePropertyPointer _corsairFreePropertyPointer;
+        private static CorsairSetLedColorsBufferPointer _corsairSetLedColorsBufferPointer;
+        private static CorsairSetLedColorsFlushBufferAsyncPointer _corsairSetLedColorsFlushBufferAsyncPointer;
 
         #endregion
 
@@ -170,6 +184,30 @@ namespace CUE.NET.Native
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate CorsairError CorsairUnsubscribeFromEventsPointer();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairConfigureKeyEventPointer([MarshalAs(UnmanagedType.LPStr)] string deviceId, ref CorsairKeyEventConfiguration config);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairGetDevicePropertyInfoPointer([MarshalAs(UnmanagedType.LPStr)] string deviceId, CorsairDevicePropertyId propertyId, uint index, out CorsairDataType dataType, out uint flags);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairReadDevicePropertyPointer([MarshalAs(UnmanagedType.LPStr)] string deviceId, CorsairDevicePropertyId propertyId, uint index, out CorsairProperty property);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairWriteDevicePropertyPointer([MarshalAs(UnmanagedType.LPStr)] string deviceId, CorsairDevicePropertyId propertyId, uint index, ref CorsairProperty property);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairFreePropertyPointer(ref CorsairProperty property);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairSetLedColorsBufferPointer([MarshalAs(UnmanagedType.LPStr)] string deviceId, int size, [In] _CorsairLedColor_V4[] ledColors);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate void CorsairAsyncCallback(IntPtr context, CorsairError error);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate CorsairError CorsairSetLedColorsFlushBufferAsyncPointer(CorsairAsyncCallback callback, IntPtr context);
 
         #endregion
 
@@ -285,6 +323,62 @@ namespace CUE.NET.Native
         internal static CorsairError CorsairUnsubscribeFromEvents()
         {
             return _corsairUnsubscribeFromEventsPointer();
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Configures key event behavior.
+        /// </summary>
+        internal static CorsairError CorsairConfigureKeyEvent(string deviceId, ref CorsairKeyEventConfiguration config)
+        {
+            return _corsairConfigureKeyEventPointer(deviceId, ref config);
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Gets information about device property.
+        /// </summary>
+        internal static CorsairError CorsairGetDevicePropertyInfo(string deviceId, CorsairDevicePropertyId propertyId, uint index, out CorsairDataType dataType, out uint flags)
+        {
+            return _corsairGetDevicePropertyInfoPointer(deviceId, propertyId, index, out dataType, out flags);
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Reads device property.
+        /// </summary>
+        internal static CorsairError CorsairReadDeviceProperty(string deviceId, CorsairDevicePropertyId propertyId, uint index, out CorsairProperty property)
+        {
+            return _corsairReadDevicePropertyPointer(deviceId, propertyId, index, out property);
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Writes device property.
+        /// </summary>
+        internal static CorsairError CorsairWriteDeviceProperty(string deviceId, CorsairDevicePropertyId propertyId, uint index, ref CorsairProperty property)
+        {
+            return _corsairWriteDevicePropertyPointer(deviceId, propertyId, index, ref property);
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Frees property memory.
+        /// </summary>
+        internal static CorsairError CorsairFreeProperty(ref CorsairProperty property)
+        {
+            return _corsairFreePropertyPointer(ref property);
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Sets specified LEDs to some colors in the buffer.
+        /// </summary>
+        internal static CorsairError CorsairSetLedColorsBuffer(string deviceId, int size, _CorsairLedColor_V4[] ledColors)
+        {
+            return _corsairSetLedColorsBufferPointer(deviceId, size, ledColors);
+        }
+
+        /// <summary>
+        /// iCUE-SDK: Flushes the LED colors buffer asynchronously.
+        /// </summary>
+        internal static CorsairError CorsairSetLedColorsFlushBufferAsync(CorsairAsyncCallback callback, IntPtr context)
+        {
+            return _corsairSetLedColorsFlushBufferAsyncPointer(callback, context);
         }
 
         // ReSharper restore EventExceptionNotDocumented

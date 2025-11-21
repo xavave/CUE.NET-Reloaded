@@ -43,6 +43,20 @@ namespace SimpleDevTest
 
                 CueSDK.KeyPressed += (sender, eventArgs) => Console.WriteLine($"Key {eventArgs.KeyId} {(eventArgs.IsPressed ? "pressed" : "released")}");
 
+                Console.WriteLine($"Initialized Devices: {CueSDK.InitializedDevices.Count()}");
+                foreach (var device in CueSDK.InitializedDevices)
+                {
+                    Console.WriteLine($"- Device: {device.DeviceInfo.Model} Type: {device.DeviceInfo.Type}");
+                }
+
+                if (CueSDK.KeyboardSDK == null)
+                {
+                    Console.WriteLine("ERROR: KeyboardSDK is null! No keyboard detected.");
+                    Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
+                    return;
+                }
+
                 //CueSDK.KeyboardSDK.Brush = (SolidColorBrush)Color.Black;
                 //CueSDK.KeyboardSDK[CorsairLedId.Z].Color = Color.Red;
                 //CueSDK.KeyboardSDK[CorsairLedId.Z].IsLocked = true;

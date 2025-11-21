@@ -106,6 +106,8 @@ namespace CUE.NET
         // API 4.x session state callback - must be kept alive to prevent GC
         private static readonly _CUESDK.CorsairSessionStateChangedHandler _sessionStateChangedHandler = OnSessionStateChanged;
 
+        private static CorsairSessionState _lastSessionState;
+
         #endregion
 
         #region Events
@@ -153,13 +155,33 @@ namespace CUE.NET
                 else
                 {
                     _CUESDK.Reload();
-                    CorsairError error = _CUESDK.CorsairConnect(_sessionStateChangedHandler, IntPtr.Zero);
 
-                    if (sdkType == null || sdkType == CorsairDeviceType.Unknown)
-                        return error == CorsairError.Success;
+                    _lastSessionState = CorsairSessionState.CSS_Invalid;
+                    _connectionWaitHandle.Reset();
+
+                    CorsairError error = _CUESDK.CorsairConnect(_sessionStateChangedHandler, IntPtr.Zero);
 
                     if (error != CorsairError.Success)
                         return false;
+
+                    // Wait for connection
+                    if (!_connectionWaitHandle.WaitOne(5000))
+                    {
+                        _CUESDK.CorsairDisconnect();
+                        return false;
+                    }
+
+                    if (_lastSessionState != CorsairSessionState.CSS_Connected)
+                    {
+                        _CUESDK.CorsairDisconnect();
+                        return false;
+                    }
+
+                    if (sdkType == null || sdkType == CorsairDeviceType.Unknown)
+                    {
+                        _CUESDK.CorsairDisconnect();
+                        return true;
+                    }
 
                     _CorsairDeviceInfo_V4[] deviceInfos = new _CorsairDeviceInfo_V4[64];
                     int deviceCount;
@@ -168,12 +190,18 @@ namespace CUE.NET
                     error = _CUESDK.CorsairGetDevices(ref filter, deviceInfos.Length, deviceInfos, out deviceCount);
 
                     if (error != CorsairError.Success)
+                    {
+                        _CUESDK.CorsairDisconnect();
                         return false;
+                    }
 
                     for (int i = 0; i < deviceCount; i++)
                     {
                         if (deviceInfos[i].type == sdkType.Value)
+                        {
+                            _CUESDK.CorsairDisconnect();
                             return true;
+                        }
                     }
 
                     // Disconnect after check
@@ -202,9 +230,23 @@ namespace CUE.NET
             _CUESDK.Reload();
 
             // Connect to iCUE (API 4.x)
+            _lastSessionState = CorsairSessionState.CSS_Invalid;
+            _connectionWaitHandle.Reset();
             CorsairError error = _CUESDK.CorsairConnect(_sessionStateChangedHandler, IntPtr.Zero);
             if (error != CorsairError.Success)
                 Throw(error, true);
+
+            // Wait for connection
+            if (!_connectionWaitHandle.WaitOne(5000)) // 5 seconds timeout
+            {
+                 Console.WriteLine("WARNING: Connection to iCUE timed out.");
+            }
+
+            if (_lastSessionState != CorsairSessionState.CSS_Connected)
+            {
+                 _CUESDK.CorsairDisconnect();
+                 throw new WrapperException($"Connection to iCUE failed. Last state: {_lastSessionState}");
+            }
 
             // Get session details
             _CorsairSessionDetails sessionDetails;
@@ -215,10 +257,17 @@ namespace CUE.NET
             ProtocolDetails = new CorsairProtocolDetails(sessionDetails);
 
             if (ProtocolDetails.BreakingChanges)
-                throw new WrapperException("The SDK currently used isn't compatible with the installed version of iCUE.\r\n"
+            {
+                Console.WriteLine("WARNING: The SDK currently used isn't compatible with the installed version of iCUE (or iCUE is not found).");
+                Console.WriteLine($"iCUE-Version: {ProtocolDetails.ServerHostVersion}");
+                Console.WriteLine($"Server-Version: {ProtocolDetails.ServerVersion}");
+                Console.WriteLine($"Client-Version: {ProtocolDetails.ClientVersion}");
+                Console.WriteLine("Proceeding anyway to attempt device detection...");
+            }
+                /*throw new WrapperException("The SDK currently used isn't compatible with the installed version of iCUE.\r\n"
                     + $"iCUE-Version: {ProtocolDetails.ServerHostVersion}\r\n"
                     + $"Server-Version: {ProtocolDetails.ServerVersion}\r\n"
-                    + $"Client-Version: {ProtocolDetails.ClientVersion}");
+                    + $"Client-Version: {ProtocolDetails.ClientVersion}");*/
 
             // Get all devices
             IList<ICueDevice> devices = new List<ICueDevice>();
@@ -335,6 +384,13 @@ namespace CUE.NET
         ///
         /// NOTE: API 4.x requires rewriting this functionality using CorsairSubscribeForEvents
         /// </summary>
+        // API 4.x event handler - must be kept alive
+        private static readonly _CUESDK.CorsairEventHandler _eventHandler = OnEvent;
+
+        /// <summary>
+        /// Enables the keypress-callback.
+        /// This method needs to be called to enable the <see cref="KeyPressed"/>-event.
+        /// </summary>
         public static void EnableKeypressCallback()
         {
             if (!IsInitialized)
@@ -343,10 +399,29 @@ namespace CUE.NET
             if (_onKeyPressedDelegate != null)
                 return;
 
-            _onKeyPressedDelegate = OnKeyPressed;
-            // TODO: Implement CorsairSubscribeForEvents for API 4.x
-            // _CUESDK.CorsairSubscribeForEvents(...);
-            throw new NotImplementedException("Key event handling needs to be migrated to API 4.x CorsairSubscribeForEvents");
+            _onKeyPressedDelegate = OnKeyPressed; // Keep this for backward compatibility if needed, or just as a flag
+
+            CorsairError error = _CUESDK.CorsairSubscribeForEvents(_eventHandler, IntPtr.Zero);
+            if (error != CorsairError.Success)
+                throw new CUEException(error);
+        }
+
+        private static void OnEvent(IntPtr context, IntPtr eventData)
+        {
+            if (eventData == IntPtr.Zero) return;
+
+            var corsairEvent = Marshal.PtrToStructure<CorsairEvent>(eventData);
+
+            switch (corsairEvent.id)
+            {
+                case CorsairEventId.KeyEvent:
+                    var keyEvent = Marshal.PtrToStructure<CorsairKeyEvent>(corsairEvent.data);
+                    KeyPressed?.Invoke(null, new KeyPressedEventArgs((CorsairKeyId)keyEvent.keyId, keyEvent.isPressed));
+                    break;
+                case CorsairEventId.DeviceConnectionStatusChangedEvent:
+                    // Handle connection changes if needed
+                    break;
+            }
         }
 
         /// <summary>
@@ -463,12 +538,23 @@ namespace CUE.NET
         private static void OnKeyPressed(IntPtr context, CorsairKeyId keyId, bool pressed)
             => KeyPressed?.Invoke(null, new KeyPressedEventArgs(keyId, pressed));
 
-        private static void OnSessionStateChanged(IntPtr context, IntPtr eventData)
+        private static System.Threading.ManualResetEvent _connectionWaitHandle = new System.Threading.ManualResetEvent(false);
+
+    private static void OnSessionStateChanged(IntPtr context, IntPtr eventData)
+    {
+        // API 4.x session state change callback
+        var stateChanged = (_CorsairSessionStateChanged)Marshal.PtrToStructure(eventData, typeof(_CorsairSessionStateChanged));
+        
+        _lastSessionState = stateChanged.state;
+        Console.WriteLine($"Session State Changed: {stateChanged.state}");
+
+        if (stateChanged.state == CorsairSessionState.CSS_Connected || 
+            stateChanged.state == CorsairSessionState.CSS_ConnectionRefused ||
+            stateChanged.state == CorsairSessionState.CSS_Timeout)
         {
-            // API 4.x session state change callback
-            // For now, we just ignore session state changes
-            // Could be enhanced to handle reconnection, version changes, etc.
+            _connectionWaitHandle.Set();
         }
+    }
 
         #endregion
     }

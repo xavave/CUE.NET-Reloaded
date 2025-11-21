@@ -36,6 +36,11 @@ namespace CUE.NET.Devices.Keyboard.Enums
         /// <summary>
         /// KR-Keyboard
         /// </summary>
-        KR = 5
+        KR = 5,
+
+        /// <summary>
+        /// Zone-Layout (e.g. for devices without physical keys like mousepads, etc. if applicable)
+        /// </summary>
+        Zone = 6
     }
 }
