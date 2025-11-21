@@ -35,10 +35,16 @@ jobs:
         New-Item -ItemType Directory -Force -Path ".\cuenet-release\bin"
         New-Item -ItemType Directory -Force -Path ".\cuenet-release\symbols"
         New-Item -ItemType Directory -Force -Path ".\cuenet-release\docs"
-        
-        # Copy DLLs
-        Copy-Item -Path "output\*CUE*.dll" -Destination ".\cuenet-release\bin\"
-        
+
+        # Copy DLLs and related files
+        Copy-Item -Path "bin\CUE.NET.dll" -Destination ".\cuenet-release\bin\" -ErrorAction SilentlyContinue
+        Copy-Item -Path "bin\CUE.NET.xml" -Destination ".\cuenet-release\bin\" -ErrorAction SilentlyContinue
+        Copy-Item -Path "bin\x64\*" -Destination ".\cuenet-release\bin\x64\" -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item -Path "bin\x86\*" -Destination ".\cuenet-release\bin\x86\" -Recurse -Force -ErrorAction SilentlyContinue
+
+        # Copy PDB symbols
+        Copy-Item -Path "bin\CUE.NET.pdb" -Destination ".\cuenet-release\symbols\" -ErrorAction SilentlyContinue
+
       shell: pwsh
     
     - name: Create Release Archive
